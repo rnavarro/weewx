@@ -1,6 +1,15 @@
 WeeWX change history
 --------------------
 
+### 5.2.1 MM/DD/YYYY
+
+Fix problem that prevented `weectl database reconfigure` from working in cases
+where a schema was specified.
+
+Fix problem when importing data into a MySQL database. PR
+#[1025](https://github.com/weewx/weewx/pull/1025). Thanks to user Robert!
+
+
 ### 5.2.0 10/05/2025
 
 Now require Python 3.7 or greater.

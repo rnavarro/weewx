@@ -65,9 +65,9 @@ import weedb
 import weeutil.config
 import weeutil.weeutil
 import weewx.accum
-import weewx.units
 import weewx.xtypes
 from weeutil.weeutil import timestamp_to_string, to_int, TimeSpan
+from weewx.units import GenWithConvert
 
 log = logging.getLogger(__name__)
 
@@ -461,8 +461,8 @@ class Manager:
         except weedb.IntegrityError:
             if not update:
                 raise
-            set_stmt = ', '.join(["%s=?" % k for k in key_list])
-            where_stmt = ' AND '.join(["%s IS ?" % k for k in key_list])
+            set_stmt = ', '.join(["`%s`=?" % k for k in key_list])
+            where_stmt = ' AND '.join(["`%s` <=> ?" % k for k in key_list])
             sql_update_stmt = "UPDATE %s SET %s WHERE dateTime = ? AND NOT (%s)" % (self.table_name, set_stmt, where_stmt)
             cursor.execute(sql_update_stmt, value_list + [record['dateTime'],] + value_list)
             if log_success:
@@ -577,7 +577,7 @@ class Manager:
             new_value (float | str): The updated value
         """
 
-        self.connection.execute("UPDATE %s SET %s=? WHERE dateTime=?" %
+        self.connection.execute("UPDATE %s SET `%s`=? WHERE dateTime=?" %
                                 (self.table_name, obs_type), (new_value, timestamp))
 
     def getSql(self, sql, sqlargs=(), cursor=None):
@@ -708,8 +708,7 @@ def reconfig(old_db_dict, new_db_dict, new_unit_system=None, new_schema=None, dr
             new_schema = weewx.schemas.wview_extended.schema
         with Manager.open_with_create(new_db_dict, schema=new_schema) as new_archive:
             # Wrap the input generator in a unit converter.
-            record_generator = weewx.units.GenWithConvert(old_archive.genBatchRecords(),
-                                                          new_unit_system)
+            record_generator = GenWithConvert(old_archive.genBatchRecords(), new_unit_system)
             if not dry_run:
                 # This is very fast because it is done in a single transaction context:
                 new_archive.addRecord(record_generator)
